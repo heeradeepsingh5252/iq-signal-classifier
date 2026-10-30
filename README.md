@@ -281,7 +281,7 @@ python -m compileall -q src tests scripts
 - **Simplified signal models:** pulse shaping, carrier frequency and phase offsets, timing errors, filtering, multipath fading, Doppler, receiver effects, and other hardware/channel impairments are outside the current simulation.
 - **SNR scope:** the low-SNR shift affects BPSK, QPSK, and AM. The noise-only class is independent of the SNR parameter.
 - **Generalization:** the 100% matched-SNR test result is based on 60 synthetic examples. It does not establish real-world generalization. The low-SNR result demonstrates a substantial performance drop under the tested synthetic condition.
-- **No deployment claim:** this repository contains an offline training and evaluation workflow, not a production RF service or hardware integration.
+- **No deployment claim:** This repository contains an offline training and evaluation workflow, not a production RF service or hardware integration.
 
 ## Next experiments
 
@@ -292,24 +292,16 @@ Potential next steps, not yet implemented or measured:
 3. Add more realistic impairments such as phase/frequency offsets, timing offsets, fading, and filtering.
 4. Validate on captured I/Q data from a suitable public dataset or SDR hardware before making real-world performance claims.
 
-## Interview explanation
+## Engineering takeaways
 
-**What does the project do?**  
-It generates synthetic two-channel I/Q baseband samples for BPSK, QPSK, AM, and noise-only classes, trains a compact 1D CNN, and evaluates performance on matched and lower SNR ranges.
+Building this classifier highlighted a few important points:
 
-**Why use a 1D CNN?**  
-The input is a time-ordered I/Q sequence. One-dimensional convolutions learn local patterns across time while keeping the model small. This implementation has 11,364 trainable parameters.
+- A compact 1D CNN can learn useful patterns from time-series I/Q data without a large number of parameters.
+- Fitting normalization statistics on training data only helps prevent data leakage.
+- High validation accuracy does not necessarily mean good performance under different operating conditions.
+- The low-SNR evaluation exposed a weakness in distinguishing noisy modulated signals from noise-only samples.
 
-**How did you avoid data leakage?**  
-The matched-SNR pool is split into training, validation, and test subsets. The channel normalizer is fitted only on the training subset. A separate low-SNR pool is generated for evaluation and is not used for training or checkpoint selection.
-
-**Why is validation accuracy 100% but low-SNR accuracy 44.75%?**  
-The validation set uses the matched 10 to 20 dB SNR range. The independent low-SNR evaluation uses -5 to 5 dB. Under that noisier condition, many modulated examples are predicted as NOISE. The result indicates a robustness weakness in this synthetic experiment.
-
-**What would you improve next?**  
-I would add broader SNR augmentation and more realistic signal/channel impairments, then evaluate on fixed held-out SNR buckets. I would report improvements only if the new evaluation supports them.
-
----
+A useful next experiment would be to train with a wider range of SNR values and compare performance across fixed, previously unseen SNR ranges.
 
 ## Artifacts
 
